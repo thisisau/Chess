@@ -42,7 +42,6 @@ public class Board {
 
 
     public void setPiece(int rank, char file, int type, boolean black) {
-        System.out.println(String.format("Setting Piece: %s%s type %s black %s", file, rank, type, black));
         if (((rank > 8) || (rank < 1)) || ((file > 'h') || (file < 'a'))) {
             JOptionPane.showMessageDialog(null, "ERROR: Out of Bounds");
         } else {
@@ -407,6 +406,10 @@ public class Board {
 
                     // queenside
                 if (!whiteKingInCheck && !piece.black && this.whiteO_O_O == 2) {
+
+
+
+
                     if (endFile == this.queenRookFile && endRank == 1) {
                         for (char file = (char) (this.kingFile-1); file>='c'; file--) {
                             if (this.pieceAt(1, file).type == 0) {
@@ -541,19 +544,19 @@ public class Board {
         
         if (m.moveType == 5) {
 
-            this.setPiece(initRank, 'e', 0, false);
+            this.setPiece(initRank, this.kingFile, 0, false);
 
-            if (pieceToMove.black) this.movePiece(new move(8, 'h', 8, 'f', 1), forreal);
-            else this.movePiece(new move(1, 'h', 1, 'f', 1), forreal);
+            if (pieceToMove.black) this.movePiece(new move(8, this.kingRookFile, 8, 'f', 1), forreal);
+            else this.movePiece(new move(1, this.kingRookFile, 1, 'f', 1), forreal);
 
             this.setPiece(initRank, 'g', 6, pieceToMove.black);
         }
         else if (m.moveType == 6) {
 
-            this.setPiece(initRank, 'e', 0, false);
+            this.setPiece(initRank, this.kingFile, 0, false);
 
-            if (pieceToMove.black) this.movePiece(new move(8, 'a', 8, 'd', 1), forreal);
-            else this.movePiece(new move(1, 'a', 1, 'd', 1), forreal);
+            if (pieceToMove.black) this.movePiece(new move(8, this.queenRookFile, 8, 'd', 1), forreal);
+            else this.movePiece(new move(1, this.queenRookFile, 1, 'd', 1), forreal);
             
             this.setPiece(initRank, 'c', 6, pieceToMove.black);
         }
@@ -628,6 +631,7 @@ public class Board {
     }
 
     public boolean kingIsCheckedAfter(move m, boolean kingIsBlack) {
+
         int a1 = this.blackO_O;
         int a2 = this.blackO_O_O;
         int a3 = this.whiteO_O;
@@ -670,11 +674,11 @@ public class Board {
         }
         else if (m.moveType == 6) {
             if (kingIsBlack) {
-                this.movePiece(new move(8, 'd', 8, this.kingRookFile, 2), false);
+                this.movePiece(new move(8, 'd', 8, this.queenRookFile, 2), false);
                 this.movePiece(new move(8, 'c', 8, this.kingFile, 2), false);
             }
             else {
-                this.movePiece(new move(1, 'd', 1, this.kingRookFile, 2), false);
+                this.movePiece(new move(1, 'd', 1, this.queenRookFile, 2), false);
                 this.movePiece(new move(1, 'c', 1, this.kingFile, 2), false);
             }
         }

@@ -181,7 +181,7 @@ public class window {
 
     static JMenuBar menubar;
     static JRadioButtonMenuItem greenColor, purpleColor;
-    static JMenuItem flipItem, resetBoard, importFEN;
+    static JMenuItem flipItem, resetBoard, importFEN, chess960;
     static JCheckBoxMenuItem autoFlipItem;
     static boolean autoFlipBoard;
     static boolean boardIsFlipped = false;
@@ -208,9 +208,11 @@ public class window {
         JMenu gameMenu = new JMenu("Game");
         resetBoard = new JMenuItem("New Game");
         importFEN = new JMenuItem("Import FEN");
+        chess960 = new JMenuItem("New Game (Chess960)");
 
         gameMenu.add(resetBoard);
         gameMenu.add(importFEN);
+        gameMenu.add(chess960);
         menubar.add(gameMenu);
 
         
@@ -284,7 +286,9 @@ public class window {
                 if ((fileClicked > 'h') || (fileClicked < 'a') || (rankClicked > 8) || (rankClicked < 1)) return;
                 ArrayList<move> allMoves = board.allMovesFor(rankClicked, fileClicked);
 
-                Piece lastPieceClicked = board.pieceAt(board.lastRankClicked, board.lastFileClicked);
+                Piece lastPieceClicked = board.pieceAt(board.lastRankClicked, board.lastFileClicked);       
+                
+                System.out.println();
 
                 // START IF
                 if (
@@ -308,9 +312,11 @@ public class window {
                     ||
 
                     (
-                        board.pieceCanMoveTo(board.lastRankClicked, board.lastFileClicked, rankClicked, fileClicked, lastPieceClicked) == 5
-                            ||
-                        board.pieceCanMoveTo(board.lastRankClicked, board.lastFileClicked, rankClicked, fileClicked, lastPieceClicked) == 6
+                        (
+                            board.pieceCanMoveTo(board.lastRankClicked, board.lastFileClicked, rankClicked, fileClicked, lastPieceClicked) == 5
+                                ||
+                            board.pieceCanMoveTo(board.lastRankClicked, board.lastFileClicked, rankClicked, fileClicked, lastPieceClicked) == 6
+                        )
                     )
                 
                 
@@ -358,7 +364,7 @@ public class window {
                 }
 
 
-                else if ((pieceClicked.black == board.blacksTurn) && (pieceClicked.type != 0)) {
+                else if ((pieceClicked.black == board.blacksTurn) && (pieceClicked.type != 0)) { // if a team piece is clicked
                         clear(frame);
                         
                         if ((!board.showingLegalMoves) || (pieceClicked != board.lastClicked)) {
@@ -705,6 +711,59 @@ public class window {
             @Override
             public void mouseExited(MouseEvent e) {
                 // t
+                
+            }
+
+        });
+
+        chess960.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                ArrayList<Integer>backRank = new ArrayList<Integer>();
+
+                // bishop placement
+
+                backRank.set(ThreadLocalRandom.current().nextInt(0, 3 + 1)*2, 3);
+                backRank.set((ThreadLocalRandom.current().nextInt(0, 3 + 1)*2) + 1, 3);
+
+                // k
+
+                board.blacksTurn = false;
+                boardIsFlipped = false;
+                board.lastMove = new move(0, 'a', 0, 'a', 0);
+                board.blackKingInCheck = false;
+                board.whiteKingInCheck = false;
+                board.whiteO_O = 2;
+                board.blackO_O = 2;
+                board.whiteO_O_O = 2;
+                board.whiteO_O_O = 2;
+
+                resetBoardVisuals(frame, board);
+                
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                //  Auto-generated method stub
+                
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                //  Auto-generated method stub
+                
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                //  Auto-generated method stub
+                
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                //  Auto-generated method stub
                 
             }
 
