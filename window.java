@@ -277,7 +277,7 @@ public class window {
                 
 
                 if (e.getButton() == 3) {
-                    JOptionPane.showMessageDialog(frame, String.format("Debug Info:\nSquare Clicked: %s%s\nBlack's Turn: %s\nPiece is black: %s\nLocation of piece's king: %s\nBlack is in check: %s\nWhite is in check: %s\nEn Passant: (-1=nobody, 0=white, 1=black) %s on %s file", fileClicked, rankClicked, board.blacksTurn, pieceClicked.black, board.getKingLocation(pieceClicked.black), board.blackKingInCheck, board.whiteKingInCheck, board.canEnPassant, board.enPassantFile));
+                    JOptionPane.showMessageDialog(frame, String.format("Debug Info:\nSquare Clicked: %s%s\nBlack's Turn: %s\nPiece is black: %s\nLocation of piece's king: %s\nBlack is in check: %s\nWhite is in check: %s\nEn Passant: (-1=nobody, 0=white, 1=black) %s on %s file\nCastling: wk: %s | wq: %s | bk: %s | bq: %s", fileClicked, rankClicked, board.blacksTurn, pieceClicked.black, board.getKingLocation(pieceClicked.black), board.blackKingInCheck, board.whiteKingInCheck, board.canEnPassant, board.enPassantFile, board.whiteO_O, board.whiteO_O_O, board.blackO_O, board.blackO_O_O));
                     return;
                 }
 
@@ -285,7 +285,7 @@ public class window {
                 ArrayList<move> allMoves = board.allMovesFor(rankClicked, fileClicked);
 
                 // START IF
-                if (board.showingLegalMoves && ((pieceClicked.type == 0) || ((pieceClicked.type != 0) && (pieceClicked.black != board.blacksTurn)))) { // If the board is showing legal moves and a non-team piece is clicked
+                if ((board.showingLegalMoves && ((pieceClicked.type == 0) || ((pieceClicked.type != 0) && (pieceClicked.black != board.blacksTurn)))) || ((pieceClicked.black == board.blacksTurn) && (pieceClicked.type != 0) && board.showingLegalMoves)) { // If the board is showing legal moves and a non-team piece is clicked
                     ArrayList<move> allLegalMoves = board.allMovesFor(board.lastRankClicked, board.lastFileClicked);
                     for (move m : allLegalMoves) {
                         if ((m.endFile == fileClicked) && (m.endRank == rankClicked)) {
@@ -330,23 +330,24 @@ public class window {
 
 
                 else if ((pieceClicked.black == board.blacksTurn) && (pieceClicked.type != 0)) {
-                    clear(frame);
-                    
-                    if ((!board.showingLegalMoves) || (pieceClicked != board.lastClicked)) {
-                        for (move move : allMoves) {
-                            if (move.moveType != 2) drawPiece(frame, 1, 4, move.endRank, move.endFile);
-                            else drawPiece(frame, 2, 4, move.endRank, move.endFile);
+
+                        clear(frame);
+                        
+                        if ((!board.showingLegalMoves) || (pieceClicked != board.lastClicked)) {
+                            for (move move : allMoves) {
+                                if (move.moveType != 2 && move.moveType != 5 && move.moveType != 6) drawPiece(frame, 1, 4, move.endRank, move.endFile);
+                                else drawPiece(frame, 2, 4, move.endRank, move.endFile);
+                            }
+                            drawPiece(frame, 3, 4, rankClicked, fileClicked);
+                            board.lastClicked = pieceClicked;
+                            board.lastFileClicked = fileClicked;
+                            board.lastRankClicked = rankClicked;
+                            board.showingLegalMoves = true;
                         }
-                        drawPiece(frame, 3, 4, rankClicked, fileClicked);
-                        board.lastClicked = pieceClicked;
-                        board.lastFileClicked = fileClicked;
-                        board.lastRankClicked = rankClicked;
-                        board.showingLegalMoves = true;
-                    }
-                    else {
-                        board.lastClicked = null;
-                        board.showingLegalMoves = false;
-                    }
+                        else {
+                            board.lastClicked = null;
+                            board.showingLegalMoves = false;
+                        }
 
                 }
 
@@ -358,6 +359,8 @@ public class window {
                 }
                 drawPieces(frame, board);
                 drawEmptyBoard(frame, board.color);
+
+                
             }
             // END IF
 
