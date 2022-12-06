@@ -42,6 +42,7 @@ public class Board {
 
 
     public void setPiece(int rank, char file, int type, boolean black) {
+        System.out.println(String.format("Setting Piece: %s%s type %s black %s", file, rank, type, black));
         if (((rank > 8) || (rank < 1)) || ((file > 'h') || (file < 'a'))) {
             JOptionPane.showMessageDialog(null, "ERROR: Out of Bounds");
         } else {
@@ -481,6 +482,14 @@ public class Board {
         return allMoves;
     }
 
+    public void doChecks() {
+        if (this.pieceAt(1, kingRookFile).type != 4 || this.pieceAt(1, kingRookFile).black) this.whiteO_O = 0;
+        if (this.pieceAt(1, queenRookFile).type != 4 || this.pieceAt(1, queenRookFile).black) this.whiteO_O_O = 0;
+        if (this.pieceAt(8, kingRookFile).type != 4 || !this.pieceAt(8, kingRookFile).black) this.blackO_O = 0;
+        if (this.pieceAt(8, queenRookFile).type != 4 || !this.pieceAt(8, queenRookFile).black) this.blackO_O_O = 0;
+
+    }
+
     public void movePiece(move m, boolean forreal) {
         char initFile = m.startFile;
         int initRank = m.startRank;
@@ -577,6 +586,9 @@ public class Board {
                 if (pieceChoice == -1) pieceType = 5;
                 this.setPiece(endRank, endFile, pieceType, blacksTurn);
             }
+
+            this.doChecks();
+
         }
 
         

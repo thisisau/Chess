@@ -284,8 +284,37 @@ public class window {
                 if ((fileClicked > 'h') || (fileClicked < 'a') || (rankClicked > 8) || (rankClicked < 1)) return;
                 ArrayList<move> allMoves = board.allMovesFor(rankClicked, fileClicked);
 
+                Piece lastPieceClicked = board.pieceAt(board.lastRankClicked, board.lastFileClicked);
+
                 // START IF
-                if ((board.showingLegalMoves && ((pieceClicked.type == 0) || ((pieceClicked.type != 0) && (pieceClicked.black != board.blacksTurn)))) || ((pieceClicked.black == board.blacksTurn) && (pieceClicked.type != 0) && board.showingLegalMoves)) { // If the board is showing legal moves and a non-team piece is clicked
+                if (
+                    
+                    (
+                        board.showingLegalMoves 
+                        && 
+                        (
+                            (
+                                pieceClicked.type == 0
+                            ) 
+                            || 
+                            (
+                                (pieceClicked.type != 0) 
+                                && 
+                                (pieceClicked.black != board.blacksTurn)
+                            )
+                        )
+                    ) 
+
+                    ||
+
+                    (
+                        board.pieceCanMoveTo(board.lastRankClicked, board.lastFileClicked, rankClicked, fileClicked, lastPieceClicked) == 5
+                            ||
+                        board.pieceCanMoveTo(board.lastRankClicked, board.lastFileClicked, rankClicked, fileClicked, lastPieceClicked) == 6
+                    )
+                
+                
+                ) { // If the board is showing legal moves and a non-team piece is clicked
                     ArrayList<move> allLegalMoves = board.allMovesFor(board.lastRankClicked, board.lastFileClicked);
                     for (move m : allLegalMoves) {
                         if ((m.endFile == fileClicked) && (m.endRank == rankClicked)) {
@@ -330,7 +359,6 @@ public class window {
 
 
                 else if ((pieceClicked.black == board.blacksTurn) && (pieceClicked.type != 0)) {
-
                         clear(frame);
                         
                         if ((!board.showingLegalMoves) || (pieceClicked != board.lastClicked)) {
