@@ -40,6 +40,27 @@ public class Board {
     int rank = 0;
     char file;
 
+    public void reset() {
+        this.lastClicked = null;
+        showingLegalMoves = false;
+        blacksTurn = false;
+        this.lastFileClicked = '\u0000';
+        this.lastRankClicked = 0;
+        this.canEnPassant = -1;
+        this.enPassantFile = '\u0000';
+        blackO_O = 2;
+        blackO_O_O = 2;
+        whiteO_O = 2;
+        whiteO_O_O = 2;
+        lastMove = new move(0, 'a', 0, 'a', 0);
+        queenRookFile = 'a';
+        kingRookFile = 'h';
+        kingFile = 'e';
+        piecesCapturedW = new ArrayList<Piece>();
+        piecesCapturedB = new ArrayList<Piece>();
+        movesList = new ArrayList<move>();
+    }
+
 
     public void setPiece(int rank, char file, int type, boolean black) {
         if (((rank > 8) || (rank < 1)) || ((file > 'h') || (file < 'a'))) {

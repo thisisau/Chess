@@ -185,6 +185,7 @@ public class window {
     static JCheckBoxMenuItem autoFlipItem;
     static boolean autoFlipBoard;
     static boolean boardIsFlipped = false;
+    static JMenu newGameMenu;
     public static void createMenuBar(JFrame frame, boolean green) {
         // "Board" menu
         menubar = new JMenuBar();
@@ -206,13 +207,15 @@ public class window {
 
         // "Game" menu
         JMenu gameMenu = new JMenu("Game");
-        resetBoard = new JMenuItem("New Game");
-        importFEN = new JMenuItem("Import FEN");
-        chess960 = new JMenuItem("New Game (Chess960)");
+        resetBoard = new JMenuItem("Default");
+        importFEN = new JMenuItem("From FEN");
+        chess960 = new JMenuItem("Chess960");
+        newGameMenu = new JMenu("New Game");
 
-        gameMenu.add(resetBoard);
-        gameMenu.add(importFEN);
-        gameMenu.add(chess960);
+        newGameMenu.add(resetBoard);
+        newGameMenu.add(importFEN);
+        newGameMenu.add(chess960);
+        gameMenu.add(newGameMenu);
         menubar.add(gameMenu);
 
         
@@ -565,15 +568,7 @@ public class window {
             @Override
             public void mousePressed(MouseEvent e) {
                 board.setLayout(1);
-                board.blacksTurn = false;
-                boardIsFlipped = false;
-                board.lastMove = new move(0, 'a', 0, 'a', 0);
-                board.blackKingInCheck = false;
-                board.whiteKingInCheck = false;
-                board.whiteO_O = 2;
-                board.blackO_O = 2;
-                board.whiteO_O_O = 2;
-                board.whiteO_O_O = 2;
+                board.reset();
 
                 resetBoardVisuals(frame, board);
             }
@@ -608,6 +603,9 @@ public class window {
 
             @Override
             public void mousePressed(MouseEvent e) {
+
+                board.reset();
+
                 while (true) {
                 try {
                     String fen = JOptionPane.showInputDialog(frame, "Enter a FEN, or type -1 to exit.", "Import Game", JOptionPane.PLAIN_MESSAGE);
@@ -720,24 +718,25 @@ public class window {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                ArrayList<Integer>backRank = new ArrayList<Integer>();
+
+                board.reset();
+
+                int knightA, knightB, bishopA, bishopB, queen;
+                knightA = -1; knightB = -1; queen = -1;
+
+                int[] backRank = new int[8];
 
                 // bishop placement
 
-                backRank.set(ThreadLocalRandom.current().nextInt(0, 3 + 1)*2, 3);
-                backRank.set((ThreadLocalRandom.current().nextInt(0, 3 + 1)*2) + 1, 3);
+                bishopA = ThreadLocalRandom.current().nextInt(0, 3 + 1)*2;
+                bishopB = ThreadLocalRandom.current().nextInt(0, 3 + 1)*2 + 1;
 
-                // k
+                backRank[bishopA] = 3;
+                backRank[bishopB] = 3;
 
-                board.blacksTurn = false;
-                boardIsFlipped = false;
-                board.lastMove = new move(0, 'a', 0, 'a', 0);
-                board.blackKingInCheck = false;
-                board.whiteKingInCheck = false;
-                board.whiteO_O = 2;
-                board.blackO_O = 2;
-                board.whiteO_O_O = 2;
-                board.whiteO_O_O = 2;
+                // knight placement
+
+                board.reset();
 
                 resetBoardVisuals(frame, board);
                 
