@@ -370,13 +370,21 @@ public class Board {
                     // kingside
                     if (endFile == this.kingRookFile && endRank == 8) {
                         for (char file = (char) (this.kingFile+1); file<='g'; file++) {
-                            if (this.pieceAt(8, file).type == 0 || (this.pieceAt(1, file).type == 4 && (file == this.kingRookFile))) {
+                            if (this.pieceAt(8, file).type == 0 || (this.pieceAt(8, file).type == 4 && (file == this.kingRookFile))) {
+                                int oldPieceType = this.pieceAt(8, file).type;
                                 this.setPiece(8, file, -1, piece.black);
                                 boolean castlingThroughCheck = this.pieceIsAttacked(8, file);
-                                this.setPiece(8, file, 0, false);
+                                this.setPiece(8, file, oldPieceType, true);
                                 if (castlingThroughCheck) return 0;
                             }
                             else return 0;
+                        }
+
+                        for (char file = (char) (this.kingRookFile-1); file>='f'; file--) {
+                            if (this.pieceAt(8, file).type != 0) {
+                                if (this.pieceAt(8, file).black == piece.black && this.pieceAt(8, file).type == 6) continue;
+                                else return 0;
+                            }
                         }
 
                         if (this.pieceAt(8, kingRookFile).type == 4) return 5;
@@ -387,15 +395,26 @@ public class Board {
 
                     // queenside
                 if (!blackKingInCheck && piece.black && this.blackO_O_O == 2) {
+                    if (this.pieceAt(8, 'b').type != 0 && this.pieceAt(8, 'b').type != 6 && endRank == 8 && endFile == 'a') return 0;
                     if (endFile == this.queenRookFile && endRank == 8) {
                         for (char file = (char) (this.kingFile-1); file>='c'; file--) {
-                            if (this.pieceAt(8, file).type == 0 || (this.pieceAt(1, file).type == 4 && (file == this.queenRookFile))) {
+                            if (this.pieceAt(8, file).type == 0 || (this.pieceAt(8, file).type == 4 && (file == this.queenRookFile))) {
+                                int oldPieceType = this.pieceAt(8, file).type;
                                 this.setPiece(8, file, -1, piece.black);
                                 boolean castlingThroughCheck = this.pieceIsAttacked(8, file);
-                                this.setPiece(8, file, 0, false);
+                                this.setPiece(8, file, oldPieceType, true);
                                 if (castlingThroughCheck) return 0;
                             }
                             else return 0;
+                        }
+
+                        
+
+                        for (char file = (char) (this.queenRookFile+1); file<='d'; file++) {
+                            if (this.pieceAt(8, file).type != 0) {
+                                if (this.pieceAt(8, file).black == piece.black && this.pieceAt(8, file).type == 6) continue;
+                                else return 0;
+                            }
                         }
 
                         if (this.pieceAt(8, queenRookFile).type == 4) return 6;
@@ -409,12 +428,20 @@ public class Board {
                     if (endFile == this.kingRookFile && endRank == 1) {
                         for (char file = (char) (this.kingFile+1); file<='g'; file++) {
                             if (this.pieceAt(1, file).type == 0 || (this.pieceAt(1, file).type == 4 && (file == this.kingRookFile))) {
+                                int oldPieceType = this.pieceAt(1, file).type;
                                 this.setPiece(1, file, -1, piece.black);
                                 boolean castlingThroughCheck = this.pieceIsAttacked(1, file);
-                                this.setPiece(1, file, 0, false);
+                                this.setPiece(1, file, oldPieceType, false);
                                 if (castlingThroughCheck) return 0;
                             }
                             else return 0;
+                        }
+
+                        for (char file = (char) (this.kingRookFile-1); file>='f'; file--) {
+                            if (this.pieceAt(1, file).type != 0) {
+                                if (this.pieceAt(1, file).black == piece.black && this.pieceAt(8, file).type == 6) continue;
+                                else return 0;
+                            }
                         }
 
                         if (this.pieceAt(8, kingRookFile).type == 4) return 5;
@@ -426,18 +453,27 @@ public class Board {
                     // queenside
                 if (!whiteKingInCheck && !piece.black && this.whiteO_O_O == 2) {
 
-
+                    if (this.pieceAt(1, 'b').type != 0 && this.pieceAt(1, 'b').type != 6 && endRank == 1 && endFile == 'a') return 0;
 
 
                     if (endFile == this.queenRookFile && endRank == 1) {
                         for (char file = (char) (this.kingFile-1); file>='c'; file--) {
                             if (this.pieceAt(1, file).type == 0 || (this.pieceAt(1, file).type == 4 && (file == this.queenRookFile))) {
+                                int oldPieceType = this.pieceAt(1, file).type;
                                 this.setPiece(1, file, -1, piece.black);
                                 boolean castlingThroughCheck = this.pieceIsAttacked(1, file);
-                                this.setPiece(1, file, 0, false);
+                                this.setPiece(1, file, oldPieceType, false);
                                 if (castlingThroughCheck) return 0;
                             }
                             else return 0;
+                        }
+
+                        
+                        for (char file = (char) (this.queenRookFile+1); file<='d'; file++) {
+                            if (this.pieceAt(1, file).type != 0) {
+                                if (this.pieceAt(1, file).black == piece.black && this.pieceAt(1, file).type == 6) continue;
+                                else return 0;
+                            }
                         }
 
                         if (this.pieceAt(8, queenRookFile).type == 4) return 6;
@@ -474,7 +510,7 @@ public class Board {
             if ((rankToGetTo == rank) && (fileToGetTo == file)) continue;
             int moveType = pieceCanMoveTo(rank, file, rankToGetTo, fileToGetTo, searchPiece);
             if (moveType != 0) {
-                move c = new move(rank, rankToGetTo, file, fileToGetTo, moveType);
+                move c = new move(rank, file, rankToGetTo, fileToGetTo, moveType);
                 if (this.kingIsCheckedAfter(c, searchPiece.black)) continue;
                 else allMoves.add(c);
                 
@@ -494,7 +530,7 @@ public class Board {
             if ((rankToGetTo == rank) && (fileToGetTo == file)) continue;
             int moveType = pieceCanMoveTo(rank, file, rankToGetTo, fileToGetTo, searchPiece);
             if (moveType != 0) {
-                move c = new move(rank, rankToGetTo, file, fileToGetTo, moveType);
+                move c = new move(rank, file, rankToGetTo, fileToGetTo, moveType);
                 allMoves.add(c);
                 
                 
@@ -513,6 +549,8 @@ public class Board {
     }
 
     public void movePiece(move m, boolean forreal) {
+
+
         char initFile = m.startFile;
         int initRank = m.startRank;
         char endFile = m.endFile;
@@ -562,22 +600,24 @@ public class Board {
 
         
         if (m.moveType == 5) {
-
-            this.setPiece(initRank, this.kingFile, 0, false);
-
-            if (pieceToMove.black) this.movePiece(new move(8, this.kingRookFile, 8, 'f', 1), forreal);
-            else this.movePiece(new move(1, this.kingRookFile, 1, 'f', 1), forreal);
-
-            this.setPiece(initRank, 'g', 6, pieceToMove.black);
+            int backRank;
+            if (this.blacksTurn) backRank = 8;
+            else backRank = 1;
+            
+            this.setPiece(backRank, this.kingRookFile, 0, false);
+            this.setPiece(backRank, this.kingFile, 0, false);
+            this.setPiece(backRank, 'g', 6, this.blacksTurn);
+            this.setPiece(backRank, 'f', 4, this.blacksTurn);
         }
         else if (m.moveType == 6) {
-
-            this.setPiece(initRank, this.kingFile, 0, false);
-
-            if (pieceToMove.black) this.movePiece(new move(8, this.queenRookFile, 8, 'd', 1), forreal);
-            else this.movePiece(new move(1, this.queenRookFile, 1, 'd', 1), forreal);
+            int backRank;
+            if (this.blacksTurn) backRank = 8;
+            else backRank = 1;
             
-            this.setPiece(initRank, 'c', 6, pieceToMove.black);
+            this.setPiece(backRank, this.queenRookFile, 0, false);
+            this.setPiece(backRank, this.kingFile, 0, false);
+            this.setPiece(backRank, 'c', 6, this.blacksTurn);
+            this.setPiece(backRank, 'd', 4, this.blacksTurn);
         }
         else {
             this.board[endRank-1][endFileNum-1] = pieceToMove;
@@ -681,25 +721,24 @@ public class Board {
 
 
         else if (m.moveType == 5) {
-            if (kingIsBlack) {
-                this.movePiece(new move(8, 'f', 8, this.kingRookFile, 2), false);
-                this.movePiece(new move(8, 'g', 8, this.kingFile, 2), false);
-
-            }
-            else {
-                this.movePiece(new move(1, 'f', 1, this.kingRookFile, 2), false);
-                this.movePiece(new move(1, 'g', 1, this.kingFile, 2), false);
-            }
+            int backRank;
+            if (kingIsBlack) backRank = 8;
+            else backRank = 1;
+            
+            this.setPiece(backRank, 'f', 0, false);
+            this.setPiece(backRank, 'g', 0, false);
+            this.setPiece(backRank, this.kingFile, 6, kingIsBlack);
+            this.setPiece(backRank, this.kingRookFile, 4, kingIsBlack);
         }
         else if (m.moveType == 6) {
-            if (kingIsBlack) {
-                this.movePiece(new move(8, 'd', 8, this.queenRookFile, 2), false);
-                this.movePiece(new move(8, 'c', 8, this.kingFile, 2), false);
-            }
-            else {
-                this.movePiece(new move(1, 'd', 1, this.queenRookFile, 2), false);
-                this.movePiece(new move(1, 'c', 1, this.kingFile, 2), false);
-            }
+            int backRank;
+            if (kingIsBlack) backRank = 8;
+            else backRank = 1;
+            
+            this.setPiece(backRank, 'd', 0, false);
+            this.setPiece(backRank, 'c', 0, false);
+            this.setPiece(backRank, this.kingFile, 6, kingIsBlack);
+            this.setPiece(backRank, this.queenRookFile, 4, kingIsBlack);
         }
 
         this.blacksTurn = !this.blacksTurn;

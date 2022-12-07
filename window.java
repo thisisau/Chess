@@ -289,9 +289,7 @@ public class window {
                 if ((fileClicked > 'h') || (fileClicked < 'a') || (rankClicked > 8) || (rankClicked < 1)) return;
                 ArrayList<move> allMoves = board.allMovesFor(rankClicked, fileClicked);
 
-                Piece lastPieceClicked = board.pieceAt(board.lastRankClicked, board.lastFileClicked);       
-                
-                System.out.println();
+                Piece lastPieceClicked = board.pieceAt(board.lastRankClicked, board.lastFileClicked);
 
                 // START IF
                 if (
@@ -567,8 +565,8 @@ public class window {
 
             @Override
             public void mousePressed(MouseEvent e) {
-                board.setLayout(1);
                 board.reset();
+                board.setLayout(1);
 
                 resetBoardVisuals(frame, board);
             }
