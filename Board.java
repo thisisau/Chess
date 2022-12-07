@@ -59,6 +59,9 @@ public class Board {
         piecesCapturedW = new ArrayList<Piece>();
         piecesCapturedB = new ArrayList<Piece>();
         movesList = new ArrayList<move>();
+
+        for (int i=0; i<8; i++) for (int j=0; j<8; j++) this.board[i][j] = new Piece(0, false);
+
     }
 
 
@@ -151,7 +154,8 @@ public class Board {
 
     public int pieceCanMoveTo(int initRank, char initFile, int endRank, char endFile, Piece piece) {
         if (piece == null) return 0;
-        else if ((this.pieceAt(endRank, endFile).black == piece.black) && this.pieceAt(endRank, endFile).type != 0 && piece.type != 6) return 0;
+        else if (this.pieceAt(endRank, endFile) == null) this.setPiece(endRank, endFile, 0, false);
+        if ((this.pieceAt(endRank, endFile).black == piece.black) && this.pieceAt(endRank, endFile).type != 0 && piece.type != 6) return 0;
         int fileNum = Piece.squareFile(initFile);
         int endFileNum = Piece.squareFile(endFile);
         int pawnMove;
@@ -366,7 +370,7 @@ public class Board {
                     // kingside
                     if (endFile == this.kingRookFile && endRank == 8) {
                         for (char file = (char) (this.kingFile+1); file<='g'; file++) {
-                            if (this.pieceAt(8, file).type == 0) {
+                            if (this.pieceAt(8, file).type == 0 || (this.pieceAt(1, file).type == 4 && (file == this.kingRookFile))) {
                                 this.setPiece(8, file, -1, piece.black);
                                 boolean castlingThroughCheck = this.pieceIsAttacked(8, file);
                                 this.setPiece(8, file, 0, false);
@@ -385,7 +389,7 @@ public class Board {
                 if (!blackKingInCheck && piece.black && this.blackO_O_O == 2) {
                     if (endFile == this.queenRookFile && endRank == 8) {
                         for (char file = (char) (this.kingFile-1); file>='c'; file--) {
-                            if (this.pieceAt(8, file).type == 0) {
+                            if (this.pieceAt(8, file).type == 0 || (this.pieceAt(1, file).type == 4 && (file == this.queenRookFile))) {
                                 this.setPiece(8, file, -1, piece.black);
                                 boolean castlingThroughCheck = this.pieceIsAttacked(8, file);
                                 this.setPiece(8, file, 0, false);
@@ -399,18 +403,12 @@ public class Board {
                     }
                 }
 
-                    
-
-                    /*if (piece.black && this.blackO_O == 2 && (this.pieceAt(8, 'f').type == 0) && (this.pieceAt(8, 'g').type == 0) && (this.pieceAt(8, 'h').type == 4) && (this.pieceAt(8, 'h').black) && (endRank == 8) && (endFile == 'g') && (!pieceIsAttacked(8, 'e'))) return 5;
-                    else if (piece.black && this.blackO_O_O == 2 && (this.pieceAt(8, 'd').type == 0) && (this.pieceAt(8, 'c').type == 0) && (this.pieceAt(8, 'b').type == 0) && (this.pieceAt(8, 'a').type == 4) && (this.pieceAt(8, 'a').black) && (endRank == 8) && (endFile == 'c')) return 6;
-                */
-
                 // white castle
                 if (!whiteKingInCheck && !piece.black && this.whiteO_O == 2) {
                     // kingside
                     if (endFile == this.kingRookFile && endRank == 1) {
                         for (char file = (char) (this.kingFile+1); file<='g'; file++) {
-                            if (this.pieceAt(1, file).type == 0) {
+                            if (this.pieceAt(1, file).type == 0 || (this.pieceAt(1, file).type == 4 && (file == this.kingRookFile))) {
                                 this.setPiece(1, file, -1, piece.black);
                                 boolean castlingThroughCheck = this.pieceIsAttacked(1, file);
                                 this.setPiece(1, file, 0, false);
@@ -433,7 +431,7 @@ public class Board {
 
                     if (endFile == this.queenRookFile && endRank == 1) {
                         for (char file = (char) (this.kingFile-1); file>='c'; file--) {
-                            if (this.pieceAt(1, file).type == 0) {
+                            if (this.pieceAt(1, file).type == 0 || (this.pieceAt(1, file).type == 4 && (file == this.queenRookFile))) {
                                 this.setPiece(1, file, -1, piece.black);
                                 boolean castlingThroughCheck = this.pieceIsAttacked(1, file);
                                 this.setPiece(1, file, 0, false);

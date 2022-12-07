@@ -282,7 +282,7 @@ public class window {
                 
 
                 if (e.getButton() == 3) {
-                    JOptionPane.showMessageDialog(frame, String.format("Debug Info:\nSquare Clicked: %s%s\nBlack's Turn: %s\nPiece is black: %s\nLocation of piece's king: %s\nBlack is in check: %s\nWhite is in check: %s\nEn Passant: (-1=nobody, 0=white, 1=black) %s on %s file\nCastling: wk: %s | wq: %s | bk: %s | bq: %s", fileClicked, rankClicked, board.blacksTurn, pieceClicked.black, board.getKingLocation(pieceClicked.black), board.blackKingInCheck, board.whiteKingInCheck, board.canEnPassant, board.enPassantFile, board.whiteO_O, board.whiteO_O_O, board.blackO_O, board.blackO_O_O));
+                    JOptionPane.showMessageDialog(frame, String.format("Debug Info:\nSquare Clicked: %s%s\nBlack's Turn: %s\nPiece is black: %s\nLocation of piece's king: %s\nBlack is in check: %s\nWhite is in check: %s\nEn Passant: (-1=nobody, 0=white, 1=black) %s on %s file\nCastling: wk: %s | wq: %s | bk: %s | bq: %s\nRook Start Files: %s, %s\nKing Start File: %s", fileClicked, rankClicked, board.blacksTurn, pieceClicked.black, board.getKingLocation(pieceClicked.black), board.blackKingInCheck, board.whiteKingInCheck, board.canEnPassant, board.enPassantFile, board.whiteO_O, board.whiteO_O_O, board.blackO_O, board.blackO_O_O, board.kingRookFile, board.queenRookFile, board.kingFile));
                     return;
                 }
 
@@ -717,33 +717,72 @@ public class window {
         chess960.addMouseListener(new MouseListener() {
 
             @Override
-            public void mouseClicked(MouseEvent e) {
-
+            public void mousePressed(MouseEvent e) {
                 board.reset();
 
-                int knightA, knightB, bishopA, bishopB, queen;
-                knightA = -1; knightB = -1; queen = -1;
+                int knightA, knightB, bishopA, bishopB, queen, rookA, rookB, king;
 
                 int[] backRank = new int[8];
+                ArrayList<Integer> available = new ArrayList<Integer>();
+                for (int i=0; i<8; i++) available.add(i);
 
                 // bishop placement
-
                 bishopA = ThreadLocalRandom.current().nextInt(0, 3 + 1)*2;
                 bishopB = ThreadLocalRandom.current().nextInt(0, 3 + 1)*2 + 1;
 
-                backRank[bishopA] = 3;
-                backRank[bishopB] = 3;
+                available.remove((Object) bishopA);
+                available.remove((Object) bishopB);
 
                 // knight placement
 
+                knightA = available.get(ThreadLocalRandom.current().nextInt(0, 5+1));
+                available.remove((Object) knightA);
+
+                knightB = available.get(ThreadLocalRandom.current().nextInt(0, 4+1));
+                available.remove((Object) knightB);
+
+                // queen placement
+
+                queen = available.get(ThreadLocalRandom.current().nextInt(0, 3+1));
+                available.remove((Object) queen);
+
+                // rook and king placement
+
+                rookA = available.get(0);
+                rookB = available.get(2);
+                king = available.get(1);
+
+                backRank[bishopA] = 3;
+                backRank[bishopB] = 3;
+                backRank[knightA] = 2;
+                backRank[knightB] = 2;
+                backRank[queen] = 5;
+                backRank[rookA] = 4;
+                backRank[rookB] = 4;
+                backRank[king] = 6;
+
                 board.reset();
+
+                for (char file = 'a'; file <= 'h'; file++) {
+                    int fileAsInt = Piece.squareFile(file) - 1;
+
+                    board.setPiece(1, file, backRank[fileAsInt], false);
+                    board.setPiece(8, file, backRank[fileAsInt], true);
+
+                    board.setPiece(2, file, 1, false);
+                    board.setPiece(7, file, 1, true);
+                }
+
+                board.kingFile = (char) (king + 97);
+                board.queenRookFile = (char) (rookA + 97);
+                board.kingRookFile = (char) (rookB + 97);
 
                 resetBoardVisuals(frame, board);
                 
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {
+            public void mouseClicked(MouseEvent e) {
                 //  Auto-generated method stub
                 
             }
