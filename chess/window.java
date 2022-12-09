@@ -10,6 +10,7 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.Color;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -42,6 +43,18 @@ public class window {
         final int LENGTH = 96;
 
         BufferedImage sprite = spritesheetImage.getSubimage(X, Y, WIDTH, LENGTH);
+
+        return new ImageIcon(sprite);
+
+    }
+
+    public static ImageIcon getSprite(int x, int y, int subX, int subY) {
+        final int X = (96*x) + (24*subX);
+        final int Y = 96*y + (24*subY);
+        final int SUB_WIDTH = 24;
+        final int SUB_LENGTH = 24;
+
+        BufferedImage sprite = spritesheetImage.getSubimage(X+subX, Y+subY, SUB_WIDTH, SUB_LENGTH);
 
         return new ImageIcon(sprite);
 
@@ -162,7 +175,18 @@ public class window {
         square.setBounds((width*(Piece.squareFile(file)-1)), (height*(rank-1)), width, height);
         square.setIcon(getSprite(x, y));
         c.add(square);
+    }
 
+    public static void drawSubPieceAtIndefiniteSquare(JFrame frame, int x, int y, int subX, int subY, int rank, char file, int subRank, int subFile) {
+        Container c = frame.getContentPane();
+        JLabel square = new JLabel();
+        int width = 96, height = 96;
+        int subWidth = 24, subHeight = 24;
+        rank = 9 - rank;
+        
+        square.setBounds((width*(Piece.squareFile(file)-1) + (subFile * subWidth)), (height*(rank-1) + (subRank * subHeight)), subWidth, subHeight);
+        square.setIcon(getSprite(x, y, subX, subY));
+        c.add(square);
     }
 
     public static void drawPieces(JFrame frame, Board board) {
@@ -177,6 +201,33 @@ public class window {
                     else if (board.lastMove.endRank == i && board.lastMove.endFile == j) drawPiece(frame, 3, 4, i, j);
                 }
 
+            }
+        }
+        drawCaptures(frame, board);
+    }
+
+    public static void drawCaptures(JFrame frame, Board board) {
+        char pointerFile = 'h';
+        int pointerPos = 3;
+
+        // draw black's captures
+        for (int i=0; i<6; i++) {
+            int x; int y;
+
+            switch (i) {
+                case 0: x = 1; y = 1;
+                case 1: x = 1; y = 0;
+                case 2: x = 2; y = 0;
+                case 3: x = 0; y = 0;
+                case 4: x = 3; y = 0;
+                case 5: x = 0; y = 1;
+                default: x = 0; y = 0;
+            }
+
+            for (int difference = board.pieceDifference[i]; difference < 0; difference++) { // black has piece advantage
+                drawSubPieceAtIndefiniteSquare(frame, 0, 5, x, y, 0, pointerFile, 0, pointerPos);
+                if (pointerPos > 0) pointerPos--;
+                else {pointerPos = 3; pointerFile--;};
             }
         }
     }
@@ -232,7 +283,7 @@ public class window {
     public static void main(String[] args) {
         // init window
         JFrame frame = new JFrame("Chess - White to move");
-        frame.setSize(96*8+16, 96*8+62);
+        frame.setSize(96*8+16, 96*8/*8 ranks of 96 pixels*/+62/*arbitrary offset thing*/+24/*bottom height*/+frame.getInsets().top+frame.getInsets().bottom);
         frame.setLayout(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         {
@@ -249,11 +300,16 @@ public class window {
         frame.setResizable(false);
         frame.setLocationRelativeTo(null);
 
+        frame.getContentPane().setBackground(new Color(101, 140, 77)); 
+
+        
+
         Board board = new Board();
         board.setLayout(1);
         drawPieces(frame, board);
 
         drawEmptyBoard(frame, board.color);
+        // frame.pack();
 
         frame.setVisible(true);
 
@@ -352,12 +408,8 @@ public class window {
                             if (autoFlipBoard && (boardIsFlipped != board.blacksTurn)) boardIsFlipped = !boardIsFlipped;
                             drawPieces(frame, board);
                             drawEmptyBoard(frame, board.color);
-                            // Piece pieceLastClicked = board.pieceAt(board.lastRankClicked, board.lastFileClicked);
-                            // boolean isCapture;
-                            // if (pieceLastClicked.type == 0) isCapture = false;
-                            // // if (board.pieceIsAttacked(kingRank, kingFile)) ;
 
-                            // // board.movesList.add(new move(board.pieceAt(board.lastRankClicked, board.lastFileClicked), board.lastRankClicked, board.lastFileClicked, rankClicked, fileClicked, isCapture, )));
+                            drawCaptures(frame, board);
                             return;
                         }
                     }
@@ -432,6 +484,7 @@ public class window {
             public void mousePressed(MouseEvent e) {
                 board.color = 0;
                 resetBoardVisuals(frame, board);
+                frame.getContentPane().setBackground(new Color(101, 140, 77)); 
             }
 
             @Override
@@ -468,7 +521,7 @@ public class window {
             public void mousePressed(MouseEvent e) {
                 board.color = 1;
                 resetBoardVisuals(frame, board);
-                
+                frame.getContentPane().setBackground(new Color(115, 66, 173));
             }
 
             @Override

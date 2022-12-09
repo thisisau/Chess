@@ -26,8 +26,7 @@ public class Board {
     
     
 
-    ArrayList<Piece> piecesCapturedW = new ArrayList<Piece>();
-    ArrayList<Piece> piecesCapturedB = new ArrayList<Piece>();
+    int[] pieceDifference = new int[6];
     ArrayList<move> movesList = new ArrayList<move>();
 
     static String[] allSquares = {"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
@@ -58,8 +57,7 @@ public class Board {
         queenRookFile = 'a';
         kingRookFile = 'h';
         kingFile = 'e';
-        piecesCapturedW = new ArrayList<Piece>();
-        piecesCapturedB = new ArrayList<Piece>();
+        pieceDifference = new int[6];
         movesList = new ArrayList<move>();
 
         for (int i=0; i<8; i++) for (int j=0; j<8; j++) this.board[i][j] = new Piece(0, false);
@@ -543,11 +541,23 @@ public class Board {
     }
 
     public void doChecks() {
+
+        // checks for castle stuff
         if (this.pieceAt(1, kingRookFile).type != 4 || this.pieceAt(1, kingRookFile).black) this.whiteO_O = 0;
         if (this.pieceAt(1, queenRookFile).type != 4 || this.pieceAt(1, queenRookFile).black) this.whiteO_O_O = 0;
         if (this.pieceAt(8, kingRookFile).type != 4 || !this.pieceAt(8, kingRookFile).black) this.blackO_O = 0;
         if (this.pieceAt(8, queenRookFile).type != 4 || !this.pieceAt(8, queenRookFile).black) this.blackO_O_O = 0;
 
+        // checks piece difference
+        for (Piece[] i : this.board) {
+            for (Piece p : i) {
+                if (p.type == 0) continue;
+                else {
+                    if (p.black) this.pieceDifference[p.type-1]--;
+                    else this.pieceDifference[p.type-1]++;
+                }      
+            }
+        }
     }
 
     public void movePiece(move m, boolean forreal) {
@@ -559,7 +569,6 @@ public class Board {
         int endRank = m.endRank;
 
         Piece pieceToMove = this.pieceAt(initRank, initFile);
-        Piece pieceToGo = this.pieceAt(endRank, endFile);
 
 
         if (pieceToMove.type == 4 && forreal) {
@@ -581,21 +590,15 @@ public class Board {
 
         if (m.moveType == 4) {
             if (pieceToMove.black) {
-                this.piecesCapturedB.add(this.pieceAt(endRank+1, endFile));
                 this.setPiece(endRank+1, endFile, 0, false);
             }
             else {
-                this.piecesCapturedW.add(this.pieceAt(endRank-1, endFile));
                 this.setPiece(endRank-1, endFile, 0, false);
             }
         }
     
 
         if (forreal) this.canEnPassant = -1;
-        if (pieceToGo.type != 0) {
-            if (pieceToMove.black) this.piecesCapturedB.add(pieceToGo);
-            else this.piecesCapturedW.add(pieceToGo);
-        }
         int initFileNum, endFileNum;
         initFileNum = Piece.squareFile(initFile);
         endFileNum = Piece.squareFile(endFile);
