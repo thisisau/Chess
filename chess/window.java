@@ -653,6 +653,7 @@ public class window {
             public void mousePressed(MouseEvent e) {
                 board.reset();
                 board.setLayout(1);
+                board.startingFen = board.toFen();
 
                 resetBoardVisuals(frame, board);
             }
