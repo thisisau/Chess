@@ -23,11 +23,14 @@ public class Board {
     char queenRookFile = 'a';
     char kingRookFile = 'h';
     char kingFile = 'e';
+    int subMove = 1;
+    String startingFen;
     
     
 
     int[] pieceDifference = new int[6];
     ArrayList<move> movesList = new ArrayList<move>();
+    ArrayList<String> movesListStr = new ArrayList<String>();
 
     static String[] allSquares = {"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
                                   "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
@@ -59,11 +62,91 @@ public class Board {
         kingFile = 'e';
         pieceDifference = new int[6];
         movesList = new ArrayList<move>();
+        movesListStr = new ArrayList<String>();
+        subMove = 1;
 
         for (int i=0; i<8; i++) for (int j=0; j<8; j++) this.board[i][j] = new Piece(0, false);
 
     }
 
+    public String toFen() {
+        String fen = "";
+
+        // part 1: pieces
+        for (int i = 8; i>0; i--) {
+            int consecutiveEmpties = 0;
+            for (char j = 'a'; j<='h'; j++) {
+                Piece pieceAtSquare = this.pieceAt(i, j);
+                if (pieceAtSquare.type == 0) {
+                    consecutiveEmpties++;
+                    if (j == 'h') {
+                        fen += consecutiveEmpties;
+                        consecutiveEmpties = 0;
+                    }
+                }
+                else {
+                    char pieceToAdd;
+                    if (consecutiveEmpties > 0) {
+                        fen += consecutiveEmpties;
+                        consecutiveEmpties = 0;
+                    }
+                    switch (pieceAtSquare.type) {
+                        case 1: pieceToAdd = 'p'; break;
+                        case 2: pieceToAdd = 'n'; break;
+                        case 3: pieceToAdd = 'b'; break;
+                        case 4: pieceToAdd = 'r'; break;
+                        case 5: pieceToAdd = 'q'; break;
+                        case 6: pieceToAdd = 'k'; break;
+                        default: consecutiveEmpties++; continue;
+                    }
+                    if (!pieceAtSquare.black) pieceToAdd -= 32;
+                    fen += pieceToAdd;
+                }
+            }
+            if (i!=1) fen += "/";
+        }
+
+        // part 2: turn
+        if (this.blacksTurn) fen += " b ";
+        else fen += " w ";
+
+        // part 3: castle
+        String fenCastle = "";
+        if (this.whiteO_O == 2) fenCastle += "K";
+        if (this.whiteO_O_O == 2) fenCastle += "Q";
+        if (this.blackO_O == 2) fenCastle += "k";
+        if (this.blackO_O_O == 2) fenCastle += "q";
+        if (fenCastle.equals("")) fenCastle = "-";
+        fen += fenCastle;
+
+        // part 4: en passant
+        if (this.canEnPassant == -1) fen += " -";
+        else if (this.canEnPassant == 0) fen += (" "+this.enPassantFile+3);
+        else if (this.canEnPassant == 1) fen += (" "+this.enPassantFile+6);
+        fen += " ";
+
+        // part 5: halfmove clock (not implemented)
+        fen += "0 ";
+
+        // part 6: fullmove clock
+        fen += (int) (Math.ceil(subMove/2.0));
+
+        return fen;
+    }
+
+
+    public String generatePgn() {
+        String pgn = "";
+        pgn += String.format("[FEN \"%s\"]\n\n", this.startingFen);
+        for (int i=0; i<movesListStr.size(); i++) {
+            // add move #
+            if (i == 0 || (i/2 > (i-1)/2)) pgn += String.format("%s. ", (i/2)+1);
+
+            pgn += (movesListStr.get(i) + " ");
+        }
+
+        return pgn;
+    }
 
     public void setPiece(int rank, char file, int type, boolean black) {
         if (((rank > 8) || (rank < 1)) || ((file > 'h') || (file < 'a'))) {
@@ -439,12 +522,12 @@ public class Board {
 
                         for (char file = (char) (this.kingRookFile-1); file>='f'; file--) {
                             if (this.pieceAt(1, file).type != 0) {
-                                if (this.pieceAt(1, file).black == piece.black && this.pieceAt(8, file).type == 6) continue;
+                                if (this.pieceAt(1, file).black == piece.black && this.pieceAt(1, file).type == 6) continue;
                                 else return 0;
                             }
                         }
 
-                        if (this.pieceAt(8, kingRookFile).type == 4) return 5;
+                        if (this.pieceAt(1, kingRookFile).type == 4) return 5;
                         else return 0;
                     }
                 }
@@ -476,16 +559,10 @@ public class Board {
                             }
                         }
 
-                        if (this.pieceAt(8, queenRookFile).type == 4) return 6;
+                        if (this.pieceAt(1, queenRookFile).type == 4) return 6;
                         else return 0;
                     }
                 }
-
-
-                /*if (!whiteKingInCheck) {
-                    if (!piece.black && this.whiteO_O == 2 && (this.pieceAt(1, 'f').type == 0) && (this.pieceAt(1, 'g').type == 0) && (this.pieceAt(1, 'h').type == 4) && (!this.pieceAt(1, 'h').black) && (endRank == 1) && (endFile == 'g') && (!pieceIsAttacked(1, 'e'))) return 5;
-                    else if (!piece.black && this.whiteO_O_O == 2 && (this.pieceAt(1, 'd').type == 0) && (this.pieceAt(1, 'c').type == 0) && (this.pieceAt(1, 'b').type == 0) && (this.pieceAt(1, 'a').type == 4) && (!this.pieceAt(1, 'a').black) && (endRank == 1) && (endFile == 'c')) return 6;
-                }*/
 
                 int maxSquaresMoved = Math.max(Math.abs(endRank - initRank), Math.abs(endFileNum - fileNum));
                 if (maxSquaresMoved == 1) {
@@ -549,6 +626,7 @@ public class Board {
         if (this.pieceAt(8, queenRookFile).type != 4 || !this.pieceAt(8, queenRookFile).black) this.blackO_O_O = 0;
 
         // checks piece difference
+        this.pieceDifference = new int[6];
         for (Piece[] i : this.board) {
             for (Piece p : i) {
                 if (p.type == 0) continue;
@@ -558,6 +636,21 @@ public class Board {
                 }      
             }
         }
+
+        // checks to see if king is in check
+        
+
+        // gets the location of the king king
+        String kingLocation = this.getKingLocation(this.blacksTurn);
+        char kingFile = Piece.squareFile(kingLocation);
+        int kingRank = Piece.squareRank(kingLocation);
+        // checks to see if enemy king is attacked
+        if (this.pieceIsAttacked(kingRank, kingFile)) {
+            if (this.blacksTurn) this.whiteKingInCheck = true;
+            else this.blackKingInCheck = true;
+        }
+
+
     }
 
     public void movePiece(move m, boolean forreal) {
@@ -632,6 +725,8 @@ public class Board {
         if (forreal) {
 
             this.lastMove = m;
+
+            this.subMove++;
             
 
             if ((pieceToMove.type == 1) && (((initRank == 2) || (initRank == 7)) && ((endRank == 4) || (endRank == 5)))) {
@@ -639,20 +734,52 @@ public class Board {
                 else this.canEnPassant = 1;
                 this.enPassantFile = endFile;
             }
-            if (pieceAt(getKingLocation(!pieceToMove.black)).black && this.pieceIsAttacked(Piece.squareRank(this.getKingLocation(!pieceToMove.black)), Piece.squareFile(this.getKingLocation(!pieceToMove.black)))) blackKingInCheck = true;
-            else blackKingInCheck = false;
-
-            if (!pieceAt(getKingLocation(!pieceToMove.black)).black && this.pieceIsAttacked(Piece.squareRank(this.getKingLocation(!pieceToMove.black)), Piece.squareFile(this.getKingLocation(!pieceToMove.black)))) whiteKingInCheck = true;
-            else whiteKingInCheck = false;
 
             
             if ((endRank == 8 || endRank == 1) && pieceToMove.type == 1) {
                 String[] promotionOptions = {"Queen", "Rook", "Bishop", "Knight"};
                 int pieceChoice = JOptionPane.showOptionDialog(null, "Which piece do you want to promote to?", "Pawn Promotion", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, promotionOptions, promotionOptions[0]);
                 int pieceType = 5-pieceChoice;
+                m.pawnPromotion = pieceType;
                 if (pieceChoice == -1) pieceType = 5;
                 this.setPiece(endRank, endFile, pieceType, blacksTurn);
             }
+
+            
+            if (pieceAt(getKingLocation(!pieceToMove.black)).black && this.pieceIsAttacked(Piece.squareRank(this.getKingLocation(!pieceToMove.black)), Piece.squareFile(this.getKingLocation(!pieceToMove.black)))) blackKingInCheck = true;
+            else blackKingInCheck = false;
+
+            if (!pieceAt(getKingLocation(!pieceToMove.black)).black && this.pieceIsAttacked(Piece.squareRank(this.getKingLocation(!pieceToMove.black)), Piece.squareFile(this.getKingLocation(!pieceToMove.black)))) whiteKingInCheck = true;
+            else whiteKingInCheck = false;
+            movesList.add(m);
+
+            String move = "";
+            if (m.moveType != 5 && m.moveType != 6) {
+                switch (pieceToMove.type) {
+                    case 2: move += "N"; break;
+                    case 3: move += "B"; break;
+                    case 4: move += "R"; break;
+                    case 5: move += "Q"; break;
+                    case 6: move += "K"; break;
+                    default: break;
+                }
+                move = move + m.startFile + m.startRank;
+                move = move + m.endFile + m.endRank;
+                if (m.pawnPromotion != 0) {
+                    move += "=";
+                    switch (m.pawnPromotion) {
+                        case 2: move += "N"; break;
+                        case 3: move += "B"; break;
+                        case 4: move += "R"; break;
+                        case 5: move += "Q"; break;
+                    }
+                }
+            }
+            else if (m.moveType == 5) move = "O-O";
+            else move = "O-O-O";
+            
+
+            movesListStr.add(move);
 
             this.doChecks();
 
@@ -721,7 +848,7 @@ public class Board {
 
         if (m.moveType == 4) {
             if (kingIsBlack) this.setPiece(4, this.enPassantFile, 1, false);
-            else this.setPiece(7, this.enPassantFile, 1, true);
+            else this.setPiece(5, this.enPassantFile, 1, true);
         }
 
 

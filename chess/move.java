@@ -6,6 +6,7 @@ public class move {
     char startFile;
     char endFile;
     int moveType;
+    int pawnPromotion = 0;
 
     public move(int startRank, char startFile, int endRank, char endFile, int moveType) {
         this.startRank = startRank; this.endRank = endRank; this.startFile = startFile; this.endFile = endFile; this.moveType = moveType;
