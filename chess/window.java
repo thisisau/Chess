@@ -10,13 +10,24 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.Color;
 
 import javax.imageio.ImageIO;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.awt.image.*;
-
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Clipboard;
 
 
 public class window {
@@ -42,6 +53,18 @@ public class window {
         final int LENGTH = 96;
 
         BufferedImage sprite = spritesheetImage.getSubimage(X, Y, WIDTH, LENGTH);
+
+        return new ImageIcon(sprite);
+
+    }
+
+    public static ImageIcon getSprite(int x, int y, int subX, int subY) {
+        final int X = (96*x) + (24*subX);
+        final int Y = 96*y + (24*subY);
+        final int SUB_WIDTH = 24;
+        final int SUB_LENGTH = 24;
+
+        BufferedImage sprite = spritesheetImage.getSubimage(X+subX, Y+subY, SUB_WIDTH, SUB_LENGTH);
 
         return new ImageIcon(sprite);
 
@@ -88,6 +111,7 @@ public class window {
         board.lastClicked = null;
         board.showingLegalMoves = false;
         drawEmptyBoard(frame, board.color);
+        drawCaptures(frame, board);
     }
 
     public static void drawPiece(JFrame frame, Piece piece, int rank, char file) {
@@ -162,7 +186,18 @@ public class window {
         square.setBounds((width*(Piece.squareFile(file)-1)), (height*(rank-1)), width, height);
         square.setIcon(getSprite(x, y));
         c.add(square);
+    }
 
+    public static void drawSubPieceAtIndefiniteSquare(JFrame frame, int x, int y, int subX, int subY, int rank, char file, int subRank, int subFile) {
+        Container c = frame.getContentPane();
+        JLabel square = new JLabel();
+        int width = 96, height = 96;
+        int subWidth = 24, subHeight = 24;
+        rank = 9 - rank;
+        
+        square.setBounds((width*(Piece.squareFile(file)-1) + (subFile * subWidth)), (height*(rank-1) + (subRank * subHeight)), subWidth, subHeight);
+        square.setIcon(getSprite(x, y, subX, subY));
+        c.add(square);
     }
 
     public static void drawPieces(JFrame frame, Board board) {
@@ -179,11 +214,62 @@ public class window {
 
             }
         }
+        drawCaptures(frame, board);
+    }
+
+    public static void drawCaptures(JFrame frame, Board board) {
+        char pointerFile = 'h';
+        int pointerPos = 3;
+
+
+        // draw black's captures
+        for (int i=5; i>=0; i--) {
+            int x = 0, y = 0;
+
+            switch (i) {
+                case 0: x = 1; y = 1; break;
+                case 1: x = 1; y = 0; break;
+                case 2: x = 2; y = 0; break;
+                case 3: x = 0; y = 0; break;
+                case 4: x = 3; y = 0; break;
+                case 5: x = 0; y = 1; break;
+            }
+
+            for (int difference = board.pieceDifference[i]; difference < 0; difference++) { // black has piece advantage
+                drawSubPieceAtIndefiniteSquare(frame, 0, 5, x, y, 0, pointerFile, 0, pointerPos);
+                if (pointerPos > 0) pointerPos--;
+                else {pointerPos = 3; pointerFile--;};
+            }
+        }
+
+        
+        pointerFile = 'a';
+        pointerPos = 0;
+
+        // draw white's captures
+        for (int i=5; i>=0; i--) {
+            int x = 0, y = 0;
+
+            switch (i) {
+                case 0: x = 3; y = 2; break;
+                case 1: x = 3; y = 1; break;
+                case 2: x = 0; y = 2; break;
+                case 3: x = 2; y = 1; break;
+                case 4: x = 1; y = 2; break;
+                case 5: x = 2; y = 2; break;
+            }
+
+            for (int difference = board.pieceDifference[i]; difference > 0; difference--) { // black has piece advantage
+                drawSubPieceAtIndefiniteSquare(frame, 0, 5, x, y, 0, pointerFile, 0, pointerPos);
+                if (pointerPos < 3) pointerPos++;
+                else {pointerPos = 0; pointerFile++;};
+            }
+        }
     }
 
     static JMenuBar menubar;
     static JRadioButtonMenuItem greenColor, purpleColor;
-    static JMenuItem flipItem, resetBoard, importFEN, chess960;
+    static JMenuItem flipItem, resetBoard, importFEN, chess960, viewGame, copyPGN;
     static JCheckBoxMenuItem autoFlipItem;
     static boolean autoFlipBoard;
     static boolean boardIsFlipped = false;
@@ -213,11 +299,15 @@ public class window {
         importFEN = new JMenuItem("From FEN");
         chess960 = new JMenuItem("Chess960");
         newGameMenu = new JMenu("New Game");
+        viewGame = new JMenuItem("View on Lichess");
+        copyPGN = new JMenuItem("Copy PGN to Clipboard");
 
         newGameMenu.add(resetBoard);
         newGameMenu.add(importFEN);
         newGameMenu.add(chess960);
         gameMenu.add(newGameMenu);
+        gameMenu.add(viewGame);
+        gameMenu.add(copyPGN);
         menubar.add(gameMenu);
 
         
@@ -232,7 +322,7 @@ public class window {
     public static void main(String[] args) {
         // init window
         JFrame frame = new JFrame("Chess - White to move");
-        frame.setSize(96*8+16, 96*8+62);
+        frame.setSize(96*8+16, 96*8/*8 ranks of 96 pixels*/+62/*arbitrary offset thing*/+24/*bottom height*/+frame.getInsets().top+frame.getInsets().bottom);
         frame.setLayout(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         {
@@ -249,11 +339,17 @@ public class window {
         frame.setResizable(false);
         frame.setLocationRelativeTo(null);
 
+        frame.getContentPane().setBackground(new Color(101, 140, 77)); 
+
+        
+
         Board board = new Board();
         board.setLayout(1);
         drawPieces(frame, board);
+        board.startingFen = board.toFen();
 
         drawEmptyBoard(frame, board.color);
+        // frame.pack();
 
         frame.setVisible(true);
 
@@ -284,7 +380,12 @@ public class window {
                 
 
                 if (e.getButton() == 3) {
-                    JOptionPane.showMessageDialog(frame, String.format("Debug Info:\nSquare Clicked: %s%s\nBlack's Turn: %s\nPiece is black: %s\nLocation of piece's king: %s\nBlack is in check: %s\nWhite is in check: %s\nEn Passant: (-1=nobody, 0=white, 1=black) %s on %s file\nCastling: wk: %s | wq: %s | bk: %s | bq: %s\nRook Start Files: %s, %s\nKing Start File: %s", fileClicked, rankClicked, board.blacksTurn, pieceClicked.black, board.getKingLocation(pieceClicked.black), board.blackKingInCheck, board.whiteKingInCheck, board.canEnPassant, board.enPassantFile, board.whiteO_O, board.whiteO_O_O, board.blackO_O, board.blackO_O_O, board.kingRookFile, board.queenRookFile, board.kingFile));
+                    try {
+                        JOptionPane.showMessageDialog(frame, String.format("Debug Info:\nSquare Clicked: %s%s\nBlack's Turn: %s\nPiece type: %s | black: %s\nLocation of piece's king: %s\nBlack is in check: %s\nWhite is in check: %s\nEn Passant: (-1=nobody, 0=white, 1=black) %s on %s file\nCastling: wk: %s | wq: %s | bk: %s | bq: %s\nRook Start Files: %s, %s\nKing Start File: %s\nCurrent FEN: %s\nInitial FEN: %s", fileClicked, rankClicked, board.blacksTurn, pieceClicked.type, pieceClicked.black, board.getKingLocation(pieceClicked.black), board.blackKingInCheck, board.whiteKingInCheck, board.canEnPassant, board.enPassantFile, board.whiteO_O, board.whiteO_O_O, board.blackO_O, board.blackO_O_O, board.kingRookFile, board.queenRookFile, board.kingFile, board.toFen(), board.startingFen));
+                    }
+                    catch (Exception ee) {
+                        JOptionPane.showMessageDialog(frame, String.format("Debug Info:\nCurrent PGN:\n%s", board.generatePgn()));
+                    }
                     return;
                 }
 
@@ -329,21 +430,7 @@ public class window {
                         if ((m.endFile == fileClicked) && (m.endRank == rankClicked)) {
                             board.movePiece(m, true);
                             board.blacksTurn = !board.blacksTurn;
-                            // System.out.println(String.format("%s%s moved to %s%s", board.lastFileClicked, board.lastRankClicked, fileClicked, rankClicked));
                             clear(frame);
-
-                            // gets the location of the enemy king
-                            String kingLocation = board.getKingLocation(!board.blacksTurn);
-                            char kingFile = Piece.squareFile(kingLocation);
-                            int kingRank = Piece.squareRank(kingLocation);
-
-                            // checks to see if enemy king is attacked
-                            if (board.pieceIsAttacked(kingRank, kingFile)) {
-                                if (board.blacksTurn) board.whiteKingInCheck = true;
-                                else board.blackKingInCheck = true;
-                            }
-
-
 
                             board.lastClicked = null;
                             board.showingLegalMoves = false;
@@ -352,12 +439,7 @@ public class window {
                             if (autoFlipBoard && (boardIsFlipped != board.blacksTurn)) boardIsFlipped = !boardIsFlipped;
                             drawPieces(frame, board);
                             drawEmptyBoard(frame, board.color);
-                            // Piece pieceLastClicked = board.pieceAt(board.lastRankClicked, board.lastFileClicked);
-                            // boolean isCapture;
-                            // if (pieceLastClicked.type == 0) isCapture = false;
-                            // // if (board.pieceIsAttacked(kingRank, kingFile)) ;
-
-                            // // board.movesList.add(new move(board.pieceAt(board.lastRankClicked, board.lastFileClicked), board.lastRankClicked, board.lastFileClicked, rankClicked, fileClicked, isCapture, )));
+                            drawCaptures(frame, board);
                             return;
                         }
                     }
@@ -394,9 +476,10 @@ public class window {
                     board.lastClicked = null;
                     board.showingLegalMoves = false;
                 }
+
                 drawPieces(frame, board);
                 drawEmptyBoard(frame, board.color);
-
+                drawCaptures(frame, board);
                 
             }
             // END IF
@@ -432,6 +515,7 @@ public class window {
             public void mousePressed(MouseEvent e) {
                 board.color = 0;
                 resetBoardVisuals(frame, board);
+                frame.getContentPane().setBackground(new Color(101, 140, 77)); 
             }
 
             @Override
@@ -468,7 +552,7 @@ public class window {
             public void mousePressed(MouseEvent e) {
                 board.color = 1;
                 resetBoardVisuals(frame, board);
-                
+                frame.getContentPane().setBackground(new Color(115, 66, 173));
             }
 
             @Override
@@ -679,6 +763,9 @@ public class window {
                         board.enPassantFile = enPassantAbility.charAt(0);
                     }
 
+                    board.doChecks();
+                    board.startingFen = board.toFen();
+
                     resetBoardVisuals(frame, board);
 
                     break;
@@ -776,7 +863,7 @@ public class window {
                 board.kingFile = (char) (king + 97);
                 board.queenRookFile = (char) (rookA + 97);
                 board.kingRookFile = (char) (rookB + 97);
-
+                board.startingFen = board.toFen();
                 resetBoardVisuals(frame, board);
                 
             }
@@ -805,6 +892,120 @@ public class window {
                 
             }
 
+        });
+
+        viewGame.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // stolen from https://stackoverflow.com/a/35013372
+                try {
+
+                    // create url
+                    URL url;
+                    url = new URL("https://lichess.org/api/import");
+
+                    // connect to url
+                    URLConnection con;
+                    con = url.openConnection();
+                    HttpURLConnection http = (HttpURLConnection) con;
+                    http.setRequestMethod("POST");
+                    http.setDoOutput(true);
+
+                    // post stuff
+                    Map<String,String> arguments = new HashMap<>();
+                    arguments.put("pgn", board.generatePgn());
+
+                    // idk
+                    StringJoiner sj = new StringJoiner("&");
+                    for(Map.Entry<String,String> entry : arguments.entrySet()) sj.add(URLEncoder.encode(entry.getKey(), "UTF-8") + "=" + URLEncoder.encode(entry.getValue(), "UTF-8"));
+                    byte[] out = sj.toString().getBytes(StandardCharsets.UTF_8);
+                    int length = out.length;
+                    http.setFixedLengthStreamingMode(length);
+                    http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                    try {
+                        http.connect();
+                    } catch (Exception ee) {
+                        JOptionPane.showMessageDialog(frame, "A connection error occured.", "Connection Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    OutputStream os = http.getOutputStream();
+                    os.write(out);
+
+                    // no longer stolen
+
+                    InputStream s = http.getInputStream();
+                    String result;
+
+                    try (Scanner scanner = new Scanner(s)) {
+                        result = scanner.hasNextLine() ? scanner.nextLine() : "";
+                    }
+
+                    String[] gameUrl;
+                    gameUrl = result.split("\"");
+
+                    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                        Desktop.getDesktop().browse(new URI(gameUrl[7]));
+                    }
+
+                } catch (Exception ee) {
+                    JOptionPane.showMessageDialog(frame, "An error occured.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                
+            }
+            
+        });
+
+        copyPGN.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                String pgn = board.generatePgn();
+                StringSelection stringSelection = new StringSelection(pgn);
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(stringSelection, null);
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                
+            }
+            
         });
     }
 }
