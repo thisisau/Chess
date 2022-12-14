@@ -708,91 +708,25 @@ public class window {
             @Override
             public void mousePressed(MouseEvent e) {
 
-                board.reset();
+                boolean a;
 
                 while (true) {
+                    a = false;
                 try {
                     String fen = JOptionPane.showInputDialog(frame, "Enter a FEN, or type -1 to exit.", "Import Game", JOptionPane.PLAIN_MESSAGE);
                     if (fen.equals("-1")) break;
-                    String[] fenInfo = fen.split(" ");
-
-
-                    String[] boardPieces = fenInfo[0].split("\\/");
-
-                    // set pieces
-                    for (int rank = 8; rank>=1; rank--) {
-                        String currentRow = boardPieces[8-rank];
-
-                        currentRow = currentRow.replace("1", "e");
-                        currentRow = currentRow.replace("2", "ee");
-                        currentRow = currentRow.replace("3", "eee");
-                        currentRow = currentRow.replace("4", "eeee");
-                        currentRow = currentRow.replace("5", "eeeee");
-                        currentRow = currentRow.replace("6", "eeeeee");
-                        currentRow = currentRow.replace("7", "eeeeeee");
-                        currentRow = currentRow.replace("8", "eeeeeeee");
-
-
-                        for (char file = 'a'; file<='h'; file++) {
-
-                            char currentItem = currentRow.charAt(file-97);
-
-                            switch (currentItem) {
-                                case 'P': board.setPiece(rank, file, 1, false); break;
-                                case 'N': board.setPiece(rank, file, 2, false); break;
-                                case 'B': board.setPiece(rank, file, 3, false); break;
-                                case 'R': board.setPiece(rank, file, 4, false); break;
-                                case 'Q': board.setPiece(rank, file, 5, false); break;
-                                case 'K': board.setPiece(rank, file, 6, false); break;
-                                case 'p': board.setPiece(rank, file, 1, true); break;
-                                case 'n': board.setPiece(rank, file, 2, true); break;
-                                case 'b': board.setPiece(rank, file, 3, true); break;
-                                case 'r': board.setPiece(rank, file, 4, true); break;
-                                case 'q': board.setPiece(rank, file, 5, true); break;
-                                case 'k': board.setPiece(rank, file, 6, true); break;
-                                case 'e': board.setPiece(rank, file, 0, false); break;
-                            }
-                        }
-                    }
-
-                    // set turn
-                    switch (fenInfo[1]) {
-                        case "w": board.blacksTurn = false; break;
-                        case "b": board.blacksTurn = true; break;
-                    }
-
-                    if (board.blacksTurn) frame.setTitle("Chess - Black to move");
-                    else frame.setTitle("Chess - White to move");
-
-                    if (autoFlipBoard) boardIsFlipped = board.blacksTurn;
-
-                    // set castle ability
-                    String castleAbility = fenInfo[2];
-
-                    if (castleAbility.contains("K")) board.whiteO_O = 2; else board.whiteO_O = 0;
-                    if (castleAbility.contains("Q")) board.whiteO_O_O = 2; else board.whiteO_O_O = 0;
-                    if (castleAbility.contains("k")) board.blackO_O = 2; else board.blackO_O = 0;
-                    if (castleAbility.contains("q")) board.blackO_O_O = 2; else board.blackO_O_O = 0;
-
-                    // set en passant stuff
-                    String enPassantAbility = fenInfo[3];
-                    if (!enPassantAbility.equals("-")) {
-                        if (enPassantAbility.charAt(1) == '3') board.canEnPassant = 1;
-                        else if (enPassantAbility.charAt(1) == '6') board.canEnPassant = 0;
-
-                        board.enPassantFile = enPassantAbility.charAt(0);
-                    }
-
-                    board.doChecks();
-                    board.startingFen = board.toFen();
-
-                    resetBoardVisuals(frame, board);
-
+                    board.importFEN(fen);
                     break;
                 } catch (Exception ee) {
                     JOptionPane.showMessageDialog(frame, "Invalid FEN", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
+                    continue;
+                }}
+                
+                if (autoFlipBoard) boardIsFlipped = board.blacksTurn;
+                if (board.blacksTurn) frame.setTitle("Chess - Black to move");
+                else frame.setTitle("Chess - White to move");
+                
+                resetBoardVisuals(frame, board);
             }
 
             @Override
