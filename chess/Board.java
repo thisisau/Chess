@@ -25,6 +25,7 @@ public class Board {
     char kingFile = 'e';
     int subMove = 1;
     String startingFen;
+    int gameStatus = 0; // 0 = currently going, 1 = checkmate (white wins), 2 = checkmate (black wins), 3 = stalemate, 4 = draw by lack of material
     
     
 
@@ -64,6 +65,7 @@ public class Board {
         movesList = new ArrayList<move>();
         movesListStr = new ArrayList<String>();
         subMove = 1;
+        this.gameStatus = 0;
 
         for (int i=0; i<8; i++) for (int j=0; j<8; j++) this.board[i][j] = new Piece(0, false);
 
@@ -637,9 +639,6 @@ public class Board {
             }
         }
 
-        // checks to see if king is in check
-        
-
         // gets the location of the king king
         String kingLocation = this.getKingLocation(this.blacksTurn);
         char kingFile = Piece.squareFile(kingLocation);
@@ -649,6 +648,26 @@ public class Board {
             if (this.blacksTurn) this.whiteKingInCheck = true;
             else this.blackKingInCheck = true;
         }
+
+        // checks for checkmate/stalemate of opposite team
+        ArrayList<move> allMoves = new ArrayList<move>();
+        for (String s : allSquares) {
+            Piece p = this.pieceAt(s);
+            if (p.black == this.blacksTurn || p.type == 0) continue;
+            int rank = Piece.squareRank(s);
+            char file = Piece.squareFile(s);
+            ArrayList<move> allMovesForPiece = this.allMovesFor(rank, file); // issue: it kinda just forgets about checks somehow, maybe swapping the turn quickly would solve this?
+            System.out.println(""+file+rank);
+            allMoves.addAll(allMovesForPiece);
+        }
+        System.out.println(allMoves.size());
+        for (move m : allMoves) System.out.print(this.kingIsCheckedAfter(m, !this.blacksTurn));
+        System.out.print("[");
+        for (move m : allMoves) {
+            System.out.print(m.toString());
+            System.out.print(", ");
+        }
+        System.out.println("\n");
 
 
     }
@@ -745,7 +764,7 @@ public class Board {
                 this.setPiece(endRank, endFile, pieceType, blacksTurn);
             }
 
-            
+            // checks to see if king is in check
             if (pieceAt(getKingLocation(!pieceToMove.black)).black && this.pieceIsAttacked(Piece.squareRank(this.getKingLocation(!pieceToMove.black)), Piece.squareFile(this.getKingLocation(!pieceToMove.black)))) blackKingInCheck = true;
             else blackKingInCheck = false;
 
