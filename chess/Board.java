@@ -650,25 +650,60 @@ public class Board {
         }
 
         // checks for checkmate/stalemate of opposite team
+        this.blacksTurn = !this.blacksTurn;
         ArrayList<move> allMoves = new ArrayList<move>();
         for (String s : allSquares) {
             Piece p = this.pieceAt(s);
-            if (p.black == this.blacksTurn || p.type == 0) continue;
+            if (p.black != this.blacksTurn || p.type == 0) continue;
             int rank = Piece.squareRank(s);
             char file = Piece.squareFile(s);
-            ArrayList<move> allMovesForPiece = this.allMovesFor(rank, file); // issue: it kinda just forgets about checks somehow, maybe swapping the turn quickly would solve this?
-            System.out.println(""+file+rank);
+            ArrayList<move> allMovesForPiece = this.allMovesFor(rank, file);
             allMoves.addAll(allMovesForPiece);
         }
-        System.out.println(allMoves.size());
-        for (move m : allMoves) System.out.print(this.kingIsCheckedAfter(m, !this.blacksTurn));
-        System.out.print("[");
-        for (move m : allMoves) {
-            System.out.print(m.toString());
-            System.out.print(", ");
-        }
-        System.out.println("\n");
+        this.blacksTurn = !this.blacksTurn;
 
+        // if no legal moves
+        if (allMoves.size() == 0) {
+            if (this.blacksTurn && !this.whiteKingInCheck) this.gameStatus = 3;
+            else if (!this.blacksTurn && !this.blackKingInCheck) this.gameStatus = 3;
+            else if (this.blacksTurn) this.gameStatus = 2;
+            else this.gameStatus = 1;
+        }
+        int[][] pieceCount = {
+            /*white pieces*/{0, 0, 0, 0}, // knights, bishops (light), bishops (dark), other
+            /*black pieces*/{0, 0, 0, 0}
+        };
+
+        // checks for draw by lack of material
+
+        // count pieces
+        for (String s : allSquares) {
+            Piece pieceAtSquare = this.pieceAt(s);
+            int pieceColor = pieceAtSquare.black ? 1 : 0;
+            int pieceType;
+            switch (pieceAtSquare.type) {
+                case 0: continue;
+                case 2: pieceType = 0; break;
+                case 3: pieceType = Piece.squareIsDark(s) ? 2 : 1; break;
+                case 6: continue;
+                default: pieceType = 3;
+            }
+            pieceCount[pieceColor][pieceType]++;
+        }
+
+        // checks to see if it is a draw
+        if (pieceCount[0][3] == 0 && pieceCount[1][3] == 0) { // no other pieces on the board
+            if (pieceCount[0][0] == 0 && pieceCount[1][0] == 0) { // no knights on the board
+                if (pieceCount[0][1] == 0 && pieceCount[1][1] == 0) this.gameStatus = 4; // no light squared bishops on the board = draw (also applies to only kings)
+                else if (pieceCount[0][2] == 0 && pieceCount[1][2] == 0) this.gameStatus = 4; // no dark squared bishops on the board = draw
+            }
+            else if (pieceCount[0][1] == 0 && pieceCount[0][2] == 0 && pieceCount[1][1] == 0 && pieceCount[1][2] == 0) { // no bishops on the board
+                if (pieceCount[0][0] > 1 || pieceCount[1][0] > 1) this.gameStatus = 0; // if one team has over one knight, game keeps going
+                else if (pieceCount[0][0] == 1 && pieceCount[1][0] == 1) this.gameStatus = 0; // if both teams have one knight, game keeps going
+                else this.gameStatus = 4; // otherwise (one team has one knight) game ends
+            }
+        }
+        
 
     }
 
@@ -718,23 +753,23 @@ public class Board {
         
         if (m.moveType == 5) {
             int backRank;
-            if (this.blacksTurn) backRank = 8;
+            if (pieceToMove.black) backRank = 8;
             else backRank = 1;
             
             this.setPiece(backRank, this.kingRookFile, 0, false);
             this.setPiece(backRank, this.kingFile, 0, false);
-            this.setPiece(backRank, 'g', 6, this.blacksTurn);
-            this.setPiece(backRank, 'f', 4, this.blacksTurn);
+            this.setPiece(backRank, 'g', 6, pieceToMove.black);
+            this.setPiece(backRank, 'f', 4, pieceToMove.black);
         }
         else if (m.moveType == 6) {
             int backRank;
-            if (this.blacksTurn) backRank = 8;
+            if (pieceToMove.black) backRank = 8;
             else backRank = 1;
             
             this.setPiece(backRank, this.queenRookFile, 0, false);
             this.setPiece(backRank, this.kingFile, 0, false);
-            this.setPiece(backRank, 'c', 6, this.blacksTurn);
-            this.setPiece(backRank, 'd', 4, this.blacksTurn);
+            this.setPiece(backRank, 'c', 6, pieceToMove.black);
+            this.setPiece(backRank, 'd', 4, pieceToMove.black);
         }
         else {
             this.board[endRank-1][endFileNum-1] = pieceToMove;
@@ -761,7 +796,7 @@ public class Board {
                 int pieceType = 5-pieceChoice;
                 m.pawnPromotion = pieceType;
                 if (pieceChoice == -1) pieceType = 5;
-                this.setPiece(endRank, endFile, pieceType, blacksTurn);
+                this.setPiece(endRank, endFile, pieceType, pieceToMove.black);
             }
 
             // checks to see if king is in check

@@ -49,6 +49,13 @@ public class Piece {
     public Piece clone() {
         return new Piece(this.type, this.black);
     }
+    public static boolean squareIsDark(int rank, char file) {
+        int fileInt = squareFile(file);
+        return !(fileInt % 2 == rank % 2);
+    }
+    public static boolean squareIsDark(String square) {
+        return squareIsDark(squareRank(square), squareFile(square));
+    }
 
     
 

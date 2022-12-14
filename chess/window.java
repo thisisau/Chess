@@ -349,12 +349,8 @@ public class window {
         board.startingFen = board.toFen();
 
         drawEmptyBoard(frame, board.color);
-        // frame.pack();
 
         frame.setVisible(true);
-
-
-        // board.print();
 
 
         frame.addMouseListener(new MouseListener() {
@@ -362,6 +358,7 @@ public class window {
             @Override
             public void mousePressed(java.awt.event.MouseEvent e) {
 
+                if (board.gameStatus != 0) return;
 
                 int x=e.getX();
                 int y=e.getY();
@@ -440,6 +437,28 @@ public class window {
                             drawPieces(frame, board);
                             drawEmptyBoard(frame, board.color);
                             drawCaptures(frame, board);
+                            switch (board.gameStatus) {
+                                case 0:
+                                    break;
+                                case 1:
+                                    frame.setTitle("Chess - White is victorious");
+                                    JOptionPane.showMessageDialog(frame, "White wins by checkmate", "Game Over", JOptionPane.PLAIN_MESSAGE);
+                                    break;
+                                case 2:
+                                    frame.setTitle("Chess - Black is victorious");
+                                    JOptionPane.showMessageDialog(frame, "Black wins by checkmate", "Game Over", JOptionPane.PLAIN_MESSAGE);
+                                    break;
+                                case 3:
+                                    frame.setTitle("Chess - Game drawn");
+                                    JOptionPane.showMessageDialog(frame, "Draw by stalemate", "Game Over", JOptionPane.PLAIN_MESSAGE);
+                                    break;
+                                case 4:
+                                    frame.setTitle("Chess - Game drawn");
+                                    JOptionPane.showMessageDialog(frame, "Draw by insufficient material", "Game Over", JOptionPane.PLAIN_MESSAGE);
+                                    break;
+                                default:
+                                    break;
+                            }
                             return;
                         }
                     }
