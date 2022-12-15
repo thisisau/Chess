@@ -269,7 +269,7 @@ public class window {
 
     static JMenuBar menubar;
     static JRadioButtonMenuItem greenColor, purpleColor;
-    static JMenuItem flipItem, resetBoard, importFEN, chess960, viewGame, copyPGN;
+    static JMenuItem flipItem, resetBoard, importFEN, chess960, viewGame, copyPGN, undoMove;
     static JCheckBoxMenuItem autoFlipItem;
     static boolean autoFlipBoard;
     static boolean boardIsFlipped = false;
@@ -300,7 +300,11 @@ public class window {
         chess960 = new JMenuItem("Chess960");
         newGameMenu = new JMenu("New Game");
         viewGame = new JMenuItem("View on Lichess");
+
+        // "Moves" menu
+        JMenu moveMenu = new JMenu("Move");
         copyPGN = new JMenuItem("Copy PGN to Clipboard");
+        undoMove = new JMenuItem("Undo Move");
 
         newGameMenu.add(resetBoard);
         newGameMenu.add(importFEN);
@@ -308,9 +312,11 @@ public class window {
         gameMenu.add(newGameMenu);
         gameMenu.add(viewGame);
         gameMenu.add(copyPGN);
+        moveMenu.add(undoMove);
         menubar.add(gameMenu);
+        menubar.add(moveMenu);
 
-        
+
         frame.setJMenuBar(menubar);
     }
 
@@ -708,19 +714,17 @@ public class window {
             @Override
             public void mousePressed(MouseEvent e) {
 
-                boolean a;
-
                 while (true) {
-                    a = false;
-                try {
-                    String fen = JOptionPane.showInputDialog(frame, "Enter a FEN, or type -1 to exit.", "Import Game", JOptionPane.PLAIN_MESSAGE);
-                    if (fen.equals("-1")) break;
-                    board.importFEN(fen);
-                    break;
-                } catch (Exception ee) {
-                    JOptionPane.showMessageDialog(frame, "Invalid FEN", "Error", JOptionPane.ERROR_MESSAGE);
-                    continue;
-                }}
+                    try {
+                        String fen = JOptionPane.showInputDialog(frame, "Enter a FEN, or type -1 to exit.", "Import Game", JOptionPane.PLAIN_MESSAGE);
+                        if (fen.equals("-1")) break;
+                        board.importFEN(fen);
+                        break;
+                    } catch (Exception ee) {
+                        JOptionPane.showMessageDialog(frame, "Invalid FEN", "Error", JOptionPane.ERROR_MESSAGE);
+                        continue;
+                    }
+                }
                 
                 if (autoFlipBoard) boardIsFlipped = board.blacksTurn;
                 if (board.blacksTurn) frame.setTitle("Chess - Black to move");
@@ -960,6 +964,74 @@ public class window {
                 
             }
             
+        });
+
+        undoMove.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                ArrayList<move> movesToMake = new ArrayList<move>(board.movesList);
+                try {
+                    movesToMake.remove(movesToMake.size()-1);
+                } catch (java.lang.IndexOutOfBoundsException ee) {
+                    return;
+                }
+                board.blacksTurn = !board.blacksTurn;
+
+                // reset stuff
+                board.lastClicked = null;
+                board.showingLegalMoves = false;
+                board.lastFileClicked = '\u0000';
+                board.lastRankClicked = 0;
+                board.canEnPassant = -1;
+                board.enPassantFile = '\u0000';
+                board.blackO_O = 2;
+                board.blackO_O_O = 2;
+                board.whiteO_O = 2;
+                board.whiteO_O_O = 2;
+                board.lastMove = new move(0, 'a', 0, 'a', 0);
+                board.pieceDifference = new int[6];
+                board.movesListStr = new ArrayList<String>();
+                board.movesList = new ArrayList<move>();
+                board.subMove = 1;
+                board.gameStatus = 0;
+                board.importFEN(board.startingFen);
+
+                // do the moves
+                for (move m : movesToMake) {
+                    board.movePiece(m, true);
+                }
+
+                
+                resetBoardVisuals(frame, board);
+
+                
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                //  Auto-generated method stub
+                
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                //  Auto-generated method stub
+                
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                //  Auto-generated method stub
+                
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                //  Auto-generated method stub
+                
+            }
+
         });
     }
 }

@@ -197,9 +197,9 @@ public class Board {
     }
 
     public Piece pieceAt(int rank, char file) {
-        if ((file > 'h') || (file < 'a') || (rank > 8) || (rank < 1)) return null;
+        if ((file > 'h') || (file < 'a') || (rank > 8) || (rank < 1)) return new Piece(0, false);
         else if (this.getBoard()[rank-1][Piece.squareFile(file)-1] != null) return this.getBoard()[rank-1][Piece.squareFile(file)-1];
-        else return null;
+        else return new Piece(0, false);
     }
 
     public Piece pieceAt(String location) {
@@ -941,11 +941,12 @@ public class Board {
     }
 
     public boolean importFEN(String fen) { // returns true if it was successful
-        try {
         this.reset();
         String[] fenInfo = fen.split(" ");
         String[] boardPieces = fenInfo[0].split("\\/");
 
+        char k = 'i', K = 'i';
+        char qr = 0, kr = 0, qR = 0, kR = 0;
         // set pieces
         for (int rank = 8; rank>=1; rank--) {
             String currentRow = boardPieces[8-rank];
@@ -959,7 +960,6 @@ public class Board {
             currentRow = currentRow.replace("7", "eeeeeee");
             currentRow = currentRow.replace("8", "eeeeeeee");
 
-
             for (char file = 'a'; file<='h'; file++) {
 
                 char currentItem = currentRow.charAt(file-97);
@@ -968,15 +968,19 @@ public class Board {
                     case 'P': this.setPiece(rank, file, 1, false); break;
                     case 'N': this.setPiece(rank, file, 2, false); break;
                     case 'B': this.setPiece(rank, file, 3, false); break;
-                    case 'R': this.setPiece(rank, file, 4, false); break;
+                    case 'R': this.setPiece(rank, file, 4, false);
+                        if (file < kingFile && rank == 1) qR = file;
+                        else if (file > kingFile && rank == 1) kR = file; break;
                     case 'Q': this.setPiece(rank, file, 5, false); break;
-                    case 'K': this.setPiece(rank, file, 6, false); break;
+                    case 'K': this.setPiece(rank, file, 6, false); K = file; break;
                     case 'p': this.setPiece(rank, file, 1, true); break;
                     case 'n': this.setPiece(rank, file, 2, true); break;
                     case 'b': this.setPiece(rank, file, 3, true); break;
-                    case 'r': this.setPiece(rank, file, 4, true); break;
+                    case 'r': this.setPiece(rank, file, 4, true);
+                        if (file < kingFile && rank == 8) qR = file;
+                        else if (file > kingFile && rank == 8) kR = file; break;
                     case 'q': this.setPiece(rank, file, 5, true); break;
-                    case 'k': this.setPiece(rank, file, 6, true); break;
+                    case 'k': this.setPiece(rank, file, 6, true); k = file; break;
                     case 'e': this.setPiece(rank, file, 0, false); break;
                 }
             }
@@ -1004,12 +1008,29 @@ public class Board {
             this.enPassantFile = enPassantAbility.charAt(0);
         }
 
+        System.out.println("breakpoitn");
+
+        
+        if (blackO_O == 2) {
+            this.kingFile = k;
+            this.kingRookFile = kr;
+        }
+        if (blackO_O_O == 2) {
+            this.kingFile = k;
+            this.kingRookFile = qr;
+        }
+        if (whiteO_O == 2) {
+            this.kingFile = K;
+            this.kingRookFile = kR;
+        }
+        if (whiteO_O_O == 2) {
+            this.kingFile = K;
+            this.queenRookFile = qR;
+        }
+
         this.doChecks();
         this.startingFen = this.toFen();
         return true;
-        } catch (Exception e) {
-            return false;
-        }
 
     }
 }
