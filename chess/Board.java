@@ -1008,8 +1008,6 @@ public class Board {
             this.enPassantFile = enPassantAbility.charAt(0);
         }
 
-        System.out.println("breakpoitn");
-
         
         if (blackO_O == 2) {
             this.kingFile = k;

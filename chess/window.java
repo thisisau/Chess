@@ -271,7 +271,7 @@ public class window {
     static JRadioButtonMenuItem greenColor, purpleColor;
     static JMenuItem flipItem, resetBoard, importFEN, chess960, viewGame, copyPGN, undoMove;
     static JCheckBoxMenuItem autoFlipItem;
-    static boolean autoFlipBoard;
+    static boolean autoFlipBoard = true;
     static boolean boardIsFlipped = false;
     static JMenu newGameMenu;
     public static void createMenuBar(JFrame frame, boolean green) {
@@ -282,7 +282,7 @@ public class window {
         greenColor = new JRadioButtonMenuItem("Green", green);
         purpleColor = new JRadioButtonMenuItem("Purple", !green);
         flipItem = new JMenuItem("Flip Board");
-        autoFlipItem = new JCheckBoxMenuItem("Flip After Turn");
+        autoFlipItem = new JCheckBoxMenuItem("Flip After Turn", true);
         ButtonGroup colorButtons = new ButtonGroup(); 
         colorButtons.add(greenColor);
         colorButtons.add(purpleColor);
@@ -324,6 +324,7 @@ public class window {
         board = new Board();
         board.setLayout(1);
     }
+
 
     public static void main(String[] args) {
         // init window
@@ -971,14 +972,15 @@ public class window {
             @Override
             public void mousePressed(MouseEvent e) {
                 ArrayList<move> movesToMake = new ArrayList<move>(board.movesList);
+                boolean blacksTurnAfter = (movesToMake.size() % 2 == 0) ? true : false;
                 try {
                     movesToMake.remove(movesToMake.size()-1);
                 } catch (java.lang.IndexOutOfBoundsException ee) {
                     return;
                 }
-                board.blacksTurn = !board.blacksTurn;
 
                 // reset stuff
+                board.blacksTurn = false;
                 board.lastClicked = null;
                 board.showingLegalMoves = false;
                 board.lastFileClicked = '\u0000';
@@ -1002,8 +1004,14 @@ public class window {
                     board.movePiece(m, true);
                 }
 
+                board.blacksTurn = blacksTurnAfter;
+                if (autoFlipBoard) boardIsFlipped = board.blacksTurn;
+                
+                if (board.blacksTurn) frame.setTitle("Chess - Black to move");
+                else frame.setTitle("Chess - White to move");
                 
                 resetBoardVisuals(frame, board);
+
 
                 
             }
