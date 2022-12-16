@@ -425,6 +425,8 @@ public class window {
                                 ||
                             board.pieceCanMoveTo(board.lastRankClicked, board.lastFileClicked, rankClicked, fileClicked, lastPieceClicked) == 6
                         )
+                        &&
+                            board.showingLegalMoves
                     )
                 
                 
